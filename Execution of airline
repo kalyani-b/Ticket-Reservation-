@@ -1,0 +1,17 @@
+Script 3: Execution of airline ticket reservation
+
+-- The executions are committed successfully because there are matching flights
+EXECUTE sp_air_tran 1, 'Jimmy', '11/14/2020', 'San Francisco', 'New York'
+EXECUTE sp_air_tran 2, 'John', '11/14/2020', 'San Luis Obispo', 'Portland'
+
+-- The transaction is not executed
+ because the flight is booked
+EXECUTE sp_air_tran 3, 'Kelly', '11/14/2020', 'San Luis Obispo', 'Portland'
+EXECUTE sp_air_tran 4, 'Judy', '11/15/2020', 'San Diego', 'San Jose'
+
+-- The transaction is not executed because the flight is not matched
+EXECUTE sp_air_tran 5, 'Lily', '11/14/2020', 'Denver', 'Boston'
+
+-- The execution for the same customer booking another available flight
+ is committed, however the customer table is not inserted
+EXECUTE sp_air_tran 1, 'Jimmy', '11/14/2020', 'Dallas', 'Boston'
