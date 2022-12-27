@@ -1,0 +1,25 @@
+---Script 1: Creating the base tables: flight, customer & booking
+
+CREATE TABLE flight
+(flight_no INT PRIMARY KEY,
+date DATE,
+leave_from VARCHAR(20),
+going_to VARCHAR(20),
+state_sold BIT)
+
+CREATE TABLE customer
+(cust_id INT PRIMARY KEY,
+cust_name VARCHAR(30))
+
+CREATE TABLE booking
+(flight_no INT, 
+date DATE,
+cust_id INT)
+
+INSERT INTO flight VALUES
+(1, '11/14/2020', 'San Francisco', 'New York', 0),
+(2, '11/14/2020', 'San Diego', 'San Jose', 0),
+(3, '11/14/2020', 'Dallas', 'Boston', 0),
+(4, '11/14/2020', 'Denver', 'Chicago', 0),
+(5, '11/14/2020', 'San Francisco', 'Sacramento', 0),
+(6, '11/14/2020', 'San Luis Obispo', 'Portland', 0);
