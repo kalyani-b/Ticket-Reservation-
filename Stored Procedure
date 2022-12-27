@@ -1,0 +1,88 @@
+Script 2: Create a stored procedure with a transaction inside
+
+CREATE PROCEDURE sp_air_tran 
+@newcust_id INT,
+@newcust_name VARCHAR(30),
+@date DATE,
+@leave_from VARCHAR(20),
+@going_to VARCHAR(20)
+
+AS
+DECLARE @flight_no INT
+DECLARE @inserr INT
+DECLARE @upderr INT
+DECLARE @maxerr INT
+SET @maxerr = 0
+
+ 
+-- Add a booking transaction if it matches the date, starting place and destination
+IF EXISTS (SELECT date, leave_from, going_to, state_sold
+FROM flight
+WHERE date = @date
+AND leave_from = @leave_from
+AND going_to = @going_to
+AND state_sold = 0)
+BEGIN
+	PRINT 'There is available flight'
+
+	BEGIN TRANSACTION
+	-- Add a customer if is isn't on file
+	IF EXISTS (SELECT @newcust_id, @newcust_name INTERSECT SELECT cust_id, cust_name FROM customer)
+		PRINT 'There is already an existing record for this customer.'
+	ELSE
+		INSERT INTO customer (cust_id, cust_name) VALUES
+		(@newcust_id, @newcust_name)
+
+		-- Save error number returned from Insert statement
+		SET @inserr = @@error
+		IF @inserr > @maxerr
+		SET @maxerr = @inserr
+
+	-- Update the flight state of sold
+	UPDATE flight
+	SET state_sold = 1 
+	WHERE date = @date
+	AND leave_from = @leave_from
+	AND going_to = @going_to
+
+	-- Save error number returned from UPDATE statement
+	SET @upderr = @@error
+	IF @upderr > @maxerr
+	SET @maxerr = @upderr
+
+	-- Give the value to the variable
+	SET @flight_no = (SELECT flight_no 
+	FROM flight WHERE date = @date
+	AND leave_from = @leave_from
+	AND going_to = @going_to)
+
+	-- add a booking record
+	INSERT INTO booking (flight_no, date, cust_id) VALUES
+	(@flight_no, @date, @newcust_id)
+
+	-- Save error number returned from Insert statement
+	SET @inserr = @@error
+	IF @inserr > @maxerr
+	SET @maxerr = @inserr
+
+	-- If any error occurres, roll back
+	IF @maxerr != 0
+	BEGIN
+		ROLLBACK
+		PRINT 'Transaction rolled back'
+	END
+	ELSE
+	BEGIN
+		COMMIT
+		PRINT 'Transaction committed'
+	END
+
+	PRINT 'Insert error number: ' + CAST(@inserr AS NVARCHAR(8))
+	PRINT 'Update error number: ' + CAST(@upderr AS NVARCHAR(8))
+
+	RETURN @maxerr
+END
+ELSE
+BEGIN
+	PRINT 'There is no available flight.'
+END
